@@ -16,16 +16,72 @@ function xhrGET(url, callback) {
     xhr.send();
 }
 
+function PostVotebar(props) {
+    const {post_id} = props;
+    return (
+        <div className='post_votebar_wrapper'>
+            <div className='post_votebar_inner'>
+                <div id={`votebar_for_post_${post_id}`} className='post_votebar'>
+                    <div id={`upvote_button_for_post_${post_id}`} className='vote_button upvote'>
+                        <svg fill="none" stroke-linejoin="round" stroke-width="32px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-b</title><path d="M448,256,272,88v96C103.57,184,64,304.77,64,424c48.61-62.24,91.6-96,208-96v96Z"/></svg>
+                    </div>
+                    <div id={`votebar_counter_for_post_${post_id}`} className='votevar_counter'>
+                    --
+                    </div>
+                    <div id={`downvote_button_for_post_${post_id}`} className='vote_button downvote'>
+                        <svg fill="none" stroke-linejoin="round" stroke-width="32px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-b</title><path d="M448,256,272,88v96C103.57,184,64,304.77,64,424c48.61-62.24,91.6-96,208-96v96Z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function PostActionBar(props) {
+    const {post} = props;
+    const actions = [
+        {'id': 1, 'display': 'Comments', 'icon': 'ti-comment-alt'},
+        {'id': 2, 'display': 'Award', 'icon': 'ti-gift'},
+        {'id': 3, 'display': 'Share', 'icon': 'ti-share'},
+    ]
+    return (
+        <div className='post_actionbar_wrapper'>
+            <div className='post_actionbar_inner'>
+                {actions.map(function(a) {
+                    return(
+                        <div className='post_action_wrapper'>
+                            <a className='post_action'>
+                                <i className={a.icon}></i>
+                                <span>{a.display}</span>
+                            </a>
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
 function Post(props) {
     const {post} = props;
-    const post_id = `post_wrapper_for_post_${post.id}`;
+
     return (
-        <div id={post_id} className='post_wrapper'>
+        <div id={`post_wrapper_for_post_${post.id}`} className='post_wrapper'>
             <div className='post_wrapper_inner'>
-                <div className='post_vote_bar'></div>
-                <div className='post'>
-                    <div className='post_header'></div>
-                    <div className='post_content'>{post.id} - {post.title}</div>
+            <PostVotebar post_id={post.id} />
+                <div className='post_content_wrapper'>
+                    <div className='post'>
+                        <div className='post_header'>
+                        <div className='post_header_title_wrapper'>
+                            <a href={post.community}>{post.community}</a>
+                        </div>
+                        <div className='post_header_detail_wrapper'>
+                            <div className='bullet_point'></div>Posted by {post.created_by} {post.posted_date}
+                        </div>
+                        </div>
+                        <div className='post_content'>{post.body}</div>
+                    </div>
+                    <PostActionBar post={post}/>
                 </div>
             </div>
         </div>
@@ -36,7 +92,7 @@ function PostListFilterBar(props) {
     const icons = [
         {'id': 1, 'title': 'Best', 'icon': 'ti-crown', 'href': '#'},
         {'id': 2, 'title': 'Hot', 'icon': 'ti-rocket', 'href': '#'},
-        {'id': 3, 'title': 'New', 'icon': 'ti-target', 'href': '#'},
+        {'id': 3, 'title': 'New', 'icon': 'ti-shine', 'href': '#'},
         {'id': 4, 'title': 'Top', 'icon': 'ti-stats-up', 'href': '#'},
     ]
     return(
@@ -89,54 +145,103 @@ function PostListCreateBar(props) {
     )
 }
 
-function TopCommunitiesEl() {
+function TopCommunitiesElCommunity(props) {
+    const {community} = props;
+    return (
+        <div className='top_communities_community_wrapper'>
+            <div className='top_communities_community_inner'>
+                <div className='top_communities_community_rank_wrapper'>
+                    <div className='top_communities_community_rank'>{community.id}</div>
+                    <div className='top_communities_community_trend'>
+                        <i className='ti-angle-up community_trend'></i>
+                    </div>
+                </div>
+                <div className='top_communities_community_name'>
+                    <a href={community.url}>nr/{community.title}</a>
+                </div>
+                <div className='community_join_button_wrapper'>
+                    <a href={community.url} className='rounded_button_link community_join'>Join</a>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function TopCommunitiesEl(props) {
+    const [communities, setCommunities] = useState([]);
+    const fetch_url = 'http://127.0.0.1:8000/api/communities';
+    useEffect(function() {
+        const callback = function(response, status) {
+            setCommunities(JSON.parse(response));
+        }
+        xhrGET(fetch_url, callback);
+    }, [])
     return (
         <div id='top_communities_wrapper'>
-            <div id='top_communities_inner' className='generic_box_wrapper'></div>
+            <div id='top_communities_inner' className='generic_box_wrapper'>
+                <div id='top_communities_rank_wrapper'>
+                    {communities.map(function(c) {
+                        return (
+                            <TopCommunitiesElCommunity key={c.id} community={c} />
+                        )
+                    })}
+                </div>
+            </div>
         </div>
     )
 }
 
-function RedditPremiumEl() {
+function RedditPremiumEl(props) {
     return (
-        <div id='reddit_premium_wrapper'>
-            <div id='reddit_premium_inner' className='generic_box_wrapper'></div>
+        <div id='notreddit_premium_wrapper'>
+            <div id='notreddit_premium_inner' className='generic_box_wrapper'>
+                <div id='notreddit_premium_header'>
+                    <div id='notreddit_premium_icon_wrapper'>
+                        <i id='notreddit_premium_icon' className='ti-medall'></i>
+                    </div>
+                    <div id='notreddit_premium_text'>
+                        <span id='notreddit_premium_text_title'>NotReddit Premium</span>
+                        <span>The best NotReddit experience, with monthly Coins</span>
+                    </div>
+                </div>
+                <div id='notreddit_premium_link_wrapper'>
+                    <div id='notreddit_premium_link'>
+                        <a className='rounded_button_link' href='/premium'>Try Now</a>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }
 
-function CreatePostCommunityEl() {
-    return (
-        <div id='create_post_community_wrapper'>
-            <div id='create_post_community_inner' className='generic_box_wrapper'></div>
-        </div>
-    )
-}
-
-function RecentPostsEl() {
-    return (
-        <div id='recent_posts_wrapper'>
-            <div id='recent_posts_inner' className='generic_box_wrapper'></div>
-        </div>
-    )
-}
-
-function NotRedditInfoEl() {
+function NotRedditInfoEl(props) {
     return (
         <div id='notreddit_info_wrapper'>
-            <div id='notreddit_info_inner' className='generic_box_wrapper'></div>
+            <div id='notreddit_info_inner' className='generic_box_wrapper'>
+                <div id='notreddit_info_link_wrapper'>
+                    <a href='/help'>Help</a>
+                    <a href='/notredditcoins'>NotReddit Coins</a>
+                    <a href='/notredditpremium'>NotRedditPremium</a>
+                    <a href='/about'>About</a>
+                    <a href='/terms'>Terms & Conditions</a>
+                    <a href='/contentpolicy'>Content Policy</a>
+                    <a href='/privacypolicy'>Privacy Policy</a>
+                    <a href='/modpolicy'>Mod Policy</a>
+                </div>
+                <div id='notreddit_info_disclaimer'>
+                    <span>NotReddit Inc © 2022. Does not exist.</span>
+                </div>
+            </div>
         </div>
     )
 }
 
-function MetricsWrapper() {
+function MetricsWrapper(props) {
     return (
         <div id='metrics_wrapper'>
             <div id='metrics_wrapper_inner'>
                 <RedditPremiumEl />
                 <TopCommunitiesEl />
-                <RecentPostsEl />
-                <CreatePostCommunityEl />
                 <NotRedditInfoEl />
             </div>
         </div>
@@ -221,7 +326,8 @@ function TopNavbarIconBar() {
     const icons = [
         {'id': 1, 'title': 'Home', 'icon': 'ti-home', 'href': '#'},
         {'id': 2, 'title': 'Account', 'icon': 'ti-user', 'href': '#'},
-        {'id': 3, 'title': 'Email', 'icon': 'ti-email', 'href': '#'}
+        {'id': 3, 'title': 'Messages', 'icon': 'ti-email', 'href': '#'},
+        {'id': 4, 'title': 'Notifications', 'icon': 'ti-bell', 'href': '#'}
     ]
     return (
         <div id='top_navbar_iconbar_wrapper'>
