@@ -6,6 +6,21 @@ import dark_logo from './dark_logo.svg';
 import notreddit from './notreddit.svg';
 
 
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function xhrGET(url, callback) {
     const xhr = new XMLHttpRequest();
     xhr.open('GET', url);
@@ -16,20 +31,62 @@ function xhrGET(url, callback) {
     xhr.send();
 }
 
+async function xhrPOST(url, data) {
+    let response = await new Promise(function(resolve) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        xhr.onload = function(e) {
+            if (xhr.status == 200) {resolve(xhr.response)}
+        };
+        xhr.onerror = function() {
+            resolve(undefined);
+            console.error('error');
+        };
+        xhr.send(JSON.stringify(data));
+    })
+    return JSON.parse(response);
+}
+
+async function voteHandler(post_id, type) {
+    const post_url = 'http://127.0.0.1:8000/api/posts/vote';
+    const data = {"post_id": post_id, "type": type};
+    let result = await new Promise(function(resolve) {
+        resolve(xhrPOST(post_url, data))
+    })
+    return result
+}
+
 function PostVotebar(props) {
-    const {post_id} = props;
+    const {post} = props;
+    const [votes, setVotes] = useState(post.votes)
+    const handleUpvote = function() {
+        voteHandler(post.id, 'up').then(function(r) {
+            if (r.status_code == 201 && r.turncoat) {setVotes(votes + 2)}
+            else if (r.status_code == 201) {setVotes(votes + 1)}
+            else {setVotes(votes - 1)}
+        });
+    }
+    const handleDownvote = function() {
+        voteHandler(post.id, 'down').then(function(r) {
+            if (r.status_code == 201 && r.turncoat) {setVotes(votes - 2)}
+            else if (r.status_code == 201) {setVotes(votes - 1)}
+            else {setVotes(votes + 1)}
+        });
+    }
     return (
         <div className='post_votebar_wrapper'>
             <div className='post_votebar_inner'>
-                <div id={`votebar_for_post_${post_id}`} className='post_votebar'>
-                    <div id={`upvote_button_for_post_${post_id}`} className='vote_button upvote'>
-                        <svg fill="none" stroke-linejoin="round" stroke-width="32px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-b</title><path d="M448,256,272,88v96C103.57,184,64,304.77,64,424c48.61-62.24,91.6-96,208-96v96Z"/></svg>
+                <div id={`votebar_for_post_${post.id}`} className='post_votebar'>
+                    <div id={`upvote_button_for_post_${post.id}`} onClick={handleUpvote} className='vote_button upvote'>
+                        <svg fill="none" strokeLinejoin="round" strokeWidth="32px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-b</title><path d="M448,256,272,88v96C103.57,184,64,304.77,64,424c48.61-62.24,91.6-96,208-96v96Z"/></svg>
                     </div>
-                    <div id={`votebar_counter_for_post_${post_id}`} className='votevar_counter'>
-                    --
+                    <div id={`votebar_counter_for_post_${post.id}`} className='votevar_counter'>
+                    {votes}
                     </div>
-                    <div id={`downvote_button_for_post_${post_id}`} className='vote_button downvote'>
-                        <svg fill="none" stroke-linejoin="round" stroke-width="32px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-b</title><path d="M448,256,272,88v96C103.57,184,64,304.77,64,424c48.61-62.24,91.6-96,208-96v96Z"/></svg>
+                    <div id={`downvote_button_for_post_${post.id}`} onClick={handleDownvote} className='vote_button downvote'>
+                        <svg fill="none" strokeLinejoin="round" strokeWidth="32px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-b</title><path d="M448,256,272,88v96C103.57,184,64,304.77,64,424c48.61-62.24,91.6-96,208-96v96Z"/></svg>
                     </div>
                 </div>
             </div>
@@ -38,7 +95,6 @@ function PostVotebar(props) {
 }
 
 function PostActionBar(props) {
-    const {post} = props;
     const actions = [
         {'id': 1, 'display': 'Comments', 'icon': 'ti-comment-alt'},
         {'id': 2, 'display': 'Award', 'icon': 'ti-gift'},
@@ -49,8 +105,8 @@ function PostActionBar(props) {
             <div className='post_actionbar_inner'>
                 {actions.map(function(a) {
                     return(
-                        <div className='post_action_wrapper'>
-                            <a className='post_action'>
+                        <div key={a.id} className='post_action_wrapper'>
+                            <a href='/' className='post_action'>
                                 <i className={a.icon}></i>
                                 <span>{a.display}</span>
                             </a>
@@ -68,16 +124,22 @@ function Post(props) {
     return (
         <div id={`post_wrapper_for_post_${post.id}`} className='post_wrapper'>
             <div className='post_wrapper_inner'>
-            <PostVotebar post_id={post.id} />
+            <PostVotebar post={post} />
                 <div className='post_content_wrapper'>
                     <div className='post'>
                         <div className='post_header'>
-                        <div className='post_header_title_wrapper'>
-                            <a href={post.community}>{post.community}</a>
-                        </div>
-                        <div className='post_header_detail_wrapper'>
-                            <div className='bullet_point'></div>Posted by {post.created_by} {post.posted_date}
-                        </div>
+                            <div className='post_header_detail_wrapper'>
+                                <div className='post_header_community_wrapper'>
+                                    <a href={post.community}>{post.community}</a>
+                                </div>
+                                <div className='post_header_detail_inner'>
+                                    <div className='bullet_point'></div>
+                                    Posted by {post.created_by} {post.posted_date}
+                                </div>
+                            </div>
+                            <div className='post_header_title_wrapper'>
+                                {post.title}
+                            </div>
                         </div>
                         <div className='post_content'>{post.body}</div>
                     </div>
@@ -215,6 +277,7 @@ function RedditPremiumEl(props) {
 }
 
 function NotRedditInfoEl(props) {
+    const year = new Date().getFullYear();
     return (
         <div id='notreddit_info_wrapper'>
             <div id='notreddit_info_inner' className='generic_box_wrapper'>
@@ -229,7 +292,7 @@ function NotRedditInfoEl(props) {
                     <a href='/modpolicy'>Mod Policy</a>
                 </div>
                 <div id='notreddit_info_disclaimer'>
-                    <span>NotReddit Inc © 2022. Does not exist.</span>
+                    <span>NotReddit Inc © {year}. Does not exist.</span>
                 </div>
             </div>
         </div>
@@ -324,10 +387,10 @@ function TopNavbarSearch(props) {
 
 function TopNavbarIconBar() {
     const icons = [
-        {'id': 1, 'title': 'Home', 'icon': 'ti-home', 'href': '#'},
-        {'id': 2, 'title': 'Account', 'icon': 'ti-user', 'href': '#'},
-        {'id': 3, 'title': 'Messages', 'icon': 'ti-email', 'href': '#'},
-        {'id': 4, 'title': 'Notifications', 'icon': 'ti-bell', 'href': '#'}
+        {'id': 1, 'title': 'Home', 'icon': 'ti-home', 'href': '/'},
+        {'id': 2, 'title': 'Account', 'icon': 'ti-user', 'href': '/u/account'},
+        {'id': 3, 'title': 'Messages', 'icon': 'ti-email', 'href': '/u/messages'},
+        {'id': 4, 'title': 'Notifications', 'icon': 'ti-bell', 'href': '/u/notifications'}
     ]
     return (
         <div id='top_navbar_iconbar_wrapper'>

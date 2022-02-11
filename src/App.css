@@ -204,14 +204,26 @@ html, body {
 
 .post_header {
     display: flex;
+    flex-direction: column;
     font-size: .75rem;
     padding-bottom: .5rem;
 }
 
 .post_header_detail_wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.post_header_detail_inner {
     color: var(--post-detail-colour);
     display: flex;
     align-items: center;
+}
+
+.post_header_title_wrapper {
+    margin: .4rem 0;
+    font-size: 1rem;
+    font-weight: 600
 }
 
 .bullet_point {
@@ -338,6 +350,7 @@ html, body {
     margin-bottom: 1rem;
     transition: outline .2s ease;
     outline: 1px solid transparent;
+    word-break: break-word;
 }
 
 .generic_box_wrapper:hover {
@@ -589,6 +602,22 @@ html, body {
 
 .post_action:hover {
     background: #262626;
+}
+
+.post_content {
+    max-height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+
+.post_content:before {
+    content:'';
+    width:100%;
+    height:100%;
+    position:absolute;
+    left:0;
+    top:0;
+    background: linear-gradient(transparent 100px, var(--component-bg-colour));
 }
 
 .post_content_wrapper {
