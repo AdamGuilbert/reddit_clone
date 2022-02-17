@@ -239,6 +239,13 @@ html, body {
     width: 100%;
     cursor: pointer;
     padding: .35rem 0;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently
+    supported by Chrome, Edge, Opera and Firefox */
 }
 
 .post_wrapper:hover .post_wrapper_inner {
@@ -328,7 +335,6 @@ html, body {
 
 #post_list_create_bar_input {
     height: 36px;
-    color: var(--main-text-colour);
     background: var(--main-field-bg-colour);
     border: 1px solid var(--component-bd-colour);
     border-radius: 4px;
@@ -336,6 +342,43 @@ html, body {
     padding: 0 .5rem;
     transition: outline .2s ease;
     flex-grow: 1;
+    color: var(--secondary-icon-colour);
+    display: flex;
+    align-items: center;
+    font-size: .9rem;
+}
+
+input, select {
+    height: 36px;
+    background: var(--main-field-bg-colour);
+    border: 1px solid var(--component-bd-colour);
+    border-radius: 4px;
+    outline: 1px solid transparent;
+    padding: 0 .75rem;
+    transition: outline .2s ease;
+    flex-grow: 1;
+    color: var(--secondary-icon-colour);
+    display: flex;
+    align-items: center;
+    font-size: .9rem;
+    font-family: inherit;
+}
+
+textarea {
+    font-family: inherit;
+    background: var(--main-field-bg-colour);
+    border: 1px solid var(--component-bd-colour);
+    border-radius: 4px;
+    outline: 1px solid transparent;
+    padding: .3rem .75rem;
+    transition: outline .2s ease;
+    flex-grow: 1;
+    color: var(--secondary-icon-colour);
+    display: flex;
+    align-items: center;
+    font-size: .9rem;
+    resize: vertical;
+    min-height: 150px;
 }
 
 #top_communities_wrapper {
@@ -605,6 +648,7 @@ html, body {
 }
 
 .post_content {
+    word-break: break-all;
     max-height: 200px;
     overflow: hidden;
     position: relative;
@@ -617,10 +661,106 @@ html, body {
     position:absolute;
     left:0;
     top:0;
-    background: linear-gradient(transparent 100px, var(--component-bg-colour));
+    background: linear-gradient(transparent 100px, var(--component-bg-colour)),
+                linear-gradient(transparent 100px, var(--component-bg-colour));
 }
 
 .post_content_wrapper {
     display: flex;
     flex-direction: column;
+}
+
+#create_post_form_outer_wrapper {
+    position: absolute;
+    display: none;
+    width: 100%;
+    top: 0;
+    height: 100%;
+    background: #000000c4;
+}
+
+#create_post_form_outer_wrapper.show {
+    display: block;
+}
+
+#create_post_form_wrapper {
+    background: var(--component-bg-colour);
+    border: 1px solid var(--component-bd-colour);
+    width: 50%;
+    left: 0;
+    right: 0;
+    top: 10%;
+    margin: auto;
+    border-radius: 4px;
+    position: relative;
+}
+
+#create_post_form {
+    display: flex;
+    flex-direction: column;
+}
+
+#create_post_form_header {
+    display: flex;
+    justify-content: flex-end;
+    padding: .3rem;
+    background: var(--component-bg-colour);
+    border-bottom: 1px solid var(--component-bd-colour);
+    border-radius: 4px 4px 0 0;
+}
+
+#create_post_form_footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-grow: 1;
+    padding: .3rem;
+    align-items: center;
+    border-top: 1px solid var(--component-bd-colour);
+}
+
+#create_post_form_close_wrapper {
+    cursor: pointer;
+    border-radius: 50%;
+    padding: .5rem;
+    font-size: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: color .2s ease, background .2s ease;
+}
+
+#create_post_form_submit_wrapper {
+    padding: .5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#create_post_form_inner {
+    padding: .5rem;
+}
+
+#create_post_form_close_wrapper:hover {
+    color: var(--main-a-hover-colour);
+    background: #262626;
+}
+
+.form_field_wrapper {
+    display: flex;
+    padding: .5rem 0;
+}
+
+.rounded_button_link.submit {
+    padding: 0.5rem;
+    background: #262626;
+    width: 4rem;
+    transition: color .2s ease;
+    cursor: pointer;
+    color: inherit;
+    outline: none;
+    border: none;
+}
+
+.rounded_button_link.submit:hover {
+    color: var(--main-a-hover-colour);
 }

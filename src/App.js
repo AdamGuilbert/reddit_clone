@@ -38,7 +38,7 @@ async function xhrPOST(url, data) {
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
         xhr.onload = function(e) {
-            if (xhr.status == 200) {resolve(xhr.response)}
+            if (xhr.status === 200) {resolve(xhr.response)}
         };
         xhr.onerror = function() {
             resolve(undefined);
@@ -61,20 +61,8 @@ async function voteHandler(post_id, type) {
 function PostVotebar(props) {
     const {post} = props;
     const [votes, setVotes] = useState(post.votes)
-    const handleUpvote = function() {
-        voteHandler(post.id, 'up').then(function(r) {
-            if (r.status_code == 201 && r.turncoat) {setVotes(votes + 2)}
-            else if (r.status_code == 201) {setVotes(votes + 1)}
-            else {setVotes(votes - 1)}
-        });
-    }
-    const handleDownvote = function() {
-        voteHandler(post.id, 'down').then(function(r) {
-            if (r.status_code == 201 && r.turncoat) {setVotes(votes - 2)}
-            else if (r.status_code == 201) {setVotes(votes - 1)}
-            else {setVotes(votes + 1)}
-        });
-    }
+    const handleUpvote = function() {setVotes(parseInt(votes + 1))}
+    const handleDownvote = function() {setVotes(parseInt(votes - 1))}
     return (
         <div className='post_votebar_wrapper'>
             <div className='post_votebar_inner'>
@@ -120,7 +108,6 @@ function PostActionBar(props) {
 
 function Post(props) {
     const {post} = props;
-
     return (
         <div id={`post_wrapper_for_post_${post.id}`} className='post_wrapper'>
             <div className='post_wrapper_inner'>
@@ -191,7 +178,9 @@ function PostListCreateBar(props) {
                     <img src={dark_logo} id="logo_icon_dark" alt="logo_icon_dark" />
                 </div>
                 <div id='post_list_create_bar_input_wrapper'>
-                    <input id='post_list_create_bar_input' placeholder='Create Post'/>
+                    <div onClick={openPostCreateForm} id='post_list_create_bar_input'>
+                        <span>Create Post</span>
+                    </div>
                 </div>
                 <div id='post_list_create_bar_iconbar_wrapper'>
                     {icons.map(function(i) {
@@ -230,19 +219,11 @@ function TopCommunitiesElCommunity(props) {
 }
 
 function TopCommunitiesEl(props) {
-    const [communities, setCommunities] = useState([]);
-    const fetch_url = 'http://127.0.0.1:8000/api/communities';
-    useEffect(function() {
-        const callback = function(response, status) {
-            setCommunities(JSON.parse(response));
-        }
-        xhrGET(fetch_url, callback);
-    }, [])
     return (
         <div id='top_communities_wrapper'>
             <div id='top_communities_inner' className='generic_box_wrapper'>
                 <div id='top_communities_rank_wrapper'>
-                    {communities.map(function(c) {
+                    {props.communities.map(function(c) {
                         return (
                             <TopCommunitiesElCommunity key={c.id} community={c} />
                         )
@@ -304,28 +285,22 @@ function MetricsWrapper(props) {
         <div id='metrics_wrapper'>
             <div id='metrics_wrapper_inner'>
                 <RedditPremiumEl />
-                <TopCommunitiesEl />
+                <TopCommunitiesEl communities={props.communities} />
                 <NotRedditInfoEl />
             </div>
         </div>
     )
 }
 
+
 function PostList(props) {
-    const [posts, setPosts] = useState([]);
-    const fetch_url = 'http://127.0.0.1:8000/api/posts';
-    useEffect(function() {
-        const callback = function(response, status) {
-            setPosts(JSON.parse(response));
-        }
-        xhrGET(fetch_url, callback);
-    }, [])
+
     return (
         <div id='post_list_wrapper'>
             <div id='post_list_inner'>
                 <PostListCreateBar />
                 <PostListFilterBar />
-                {posts.map((p) => {return <Post post={p} key={p.id}/>})}
+                {props.posts.map((p) => {return <Post post={p} key={p.id}/>})}
             </div>
         </div>
     )
@@ -335,8 +310,8 @@ function PostWrapper(props) {
     return (
         <div id='posts_content_wrapper'>
             <div id='posts_content_inner'>
-            <PostList />
-            <MetricsWrapper />
+            <PostList posts={props.posts} />
+            <MetricsWrapper communities={props.communities} />
             </div>
         </div>
     )
@@ -354,20 +329,13 @@ function TopNavbarLogo(props) {
     )
 }
 
+
 function CommunitySelect(props) {
-    const [communities, setCommunities] = useState([]);
-    const fetch_url = 'http://127.0.0.1:8000/api/communities';
-    useEffect(function() {
-        const callback = function(response, status) {
-            setCommunities(JSON.parse(response));
-        }
-        xhrGET(fetch_url, callback);
-    }, [])
     return (
         <div id='top_navbar_community_select_wrapper'>
             <div id='top_navbar_community_select_inner'>
                 <select id='top_navbar_community_select'>
-                    {communities.map(function(c) {return <option key={c.id} value={c.id}>nr/{c.title}</option>})}
+                    {props.communities.map(function(c) {return <option key={c.id} value={c.id}>nr/{c.title}</option>})}
                 </select>
             </div>
         </div>
@@ -412,7 +380,7 @@ function TopNavbar(props) {
         <div id='top_navbar_wrapper'>
             <div id='top_navbar_inner'>
                 <TopNavbarLogo />
-                <CommunitySelect />
+                <CommunitySelect communities={props.communities} />
                 <TopNavbarSearch />
                 <TopNavbarIconBar />
             </div>
@@ -420,14 +388,103 @@ function TopNavbar(props) {
     )
 }
 
+function PostCommunitySelectEl(props) {
+    return (
+        <div className='form_field_wrapper'>
+            <select name='community' placeholder='community'>
+                {props.communities.map(function(c) {
+                    return <option key={c.id} value={`nr/${c.title}`}>nr/{c.title}</option>
+                })}
+            </select>
+        </div>
+    )
+}
+
+function closePostCreateForm() {
+    const form_el = document.getElementById('create_post_form_outer_wrapper');
+    form_el.classList.remove('show');
+}
+
+function openPostCreateForm(e, callback) {
+    const form_el = document.getElementById('create_post_form_outer_wrapper');
+    form_el.classList.add('show');
+}
+
+function submitPostCreateForm(e, callback, posts) {
+    closePostCreateForm();
+    const form_el = document.getElementById('create_post_form');
+    const data = new FormData(form_el);
+    data.append('id', posts.length + 1);
+    data.append('votes', parseInt(0));
+    data.append('created_by', 'Anonymous User');
+    let post = {};
+    for (const entry of data.entries()) {post[entry[0]] = entry[1]}
+    posts.unshift(post)
+    callback([...posts])
+    form_el.reset();
+}
+
+function CreatePostForm(props) {
+    function handleSubmit(e) {
+        e.preventDefault();
+        submitPostCreateForm(e, props.onSubmitForm, props.posts)
+    }
+    return (
+        <div id='create_post_form_outer_wrapper'>
+            <div id='create_post_form_wrapper'>
+                <div id='create_post_form_header'>
+                    <div onClick={closePostCreateForm} id='create_post_form_close_wrapper'>
+                        <i className='ti-close'></i>
+                    </div>
+                </div>
+                <form onSubmit={handleSubmit} id='create_post_form'>
+                <div id='create_post_form_inner'>
+                    <PostCommunitySelectEl communities={props.communities} />
+                    <div className='form_field_wrapper'>
+                        <input required name='title' placeholder='Title'/>
+                    </div>
+                    <div className='form_field_wrapper'>
+                        <textarea name='body' placeholder='Content (optional)'></textarea>
+                    </div>
+                </div>
+                <div id='create_post_form_footer'>
+                    <div id='create_post_form_submit_wrapper'>
+                        <button type='submit' className='rounded_button_link submit'>Submit</button>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    )
+}
+
 function App() {
+    const [communities, setCommunities] = useState([]);
+    let communities_fetch_url = 'http://127.0.0.1:8000/api/communities';
+    useEffect(function() {
+        const callback = function(response, status) {
+            setCommunities(JSON.parse(response));
+        }
+        xhrGET(communities_fetch_url, callback);
+    }, [])
+
+    const [posts, setPosts] = useState([]);
+    let posts_fetch_url = 'http://127.0.0.1:8000/api/posts';
+    useEffect(function() {
+        const callback = function(response, status) {
+            setPosts(JSON.parse(response));
+        }
+        xhrGET(posts_fetch_url, callback);
+    }, [])
+    console.log(posts)
     return (
         <div className="App">
             <div id='main_wrapper'>
-                <TopNavbar />
+                <TopNavbar communities={communities} />
                 <div id='main_content_wrapper'>
-                    <PostWrapper />
+                    <PostWrapper communities={communities} posts={posts} />
                 </div>
+                <CreatePostForm communities={communities} onSubmitForm={setPosts} posts={posts} />
             </div>
         </div>
     );
